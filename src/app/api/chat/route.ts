@@ -98,7 +98,6 @@ export async function POST(req: Request) {
       } catch (error) {
         if (req.signal.aborted) return controller.close();
         console.error("[api/chat]", error);
-        if (error instanceof Anthropic.AuthenticationError) logKeyShape();
         controller.enqueue(encoder.encode(errorText(error)));
         controller.close();
       }
@@ -110,18 +109,6 @@ export async function POST(req: Request) {
 
   return new Response(body$, {
     headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
-  });
-}
-
-/** 키가 거절됐을 때 원인 파악용: 키 값은 남기지 않고 형태만 로그로 남긴다 */
-function logKeyShape() {
-  const key = cleanEnv(process.env.ANTHROPIC_API_KEY) ?? "";
-  console.error("[api/chat] ANTHROPIC_API_KEY shape", {
-    length: key.length,
-    startsWithSkAnt: key.startsWith("sk-ant-"),
-    hasWhitespace: /\s/.test(key),
-    hasQuote: /["']/.test(key),
-    hasEquals: key.includes("="),
   });
 }
 
