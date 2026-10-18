@@ -10,8 +10,11 @@ interface ChatRequestBody {
   messages: { role: Role; content: string }[];
 }
 
+/** 대시보드에 붙여 넣을 때 섞여 들어가기 쉬운 앞뒤 공백·따옴표를 걷어낸다 */
+const cleanEnv = (value: string | undefined) => value?.trim().replace(/^(["'])(.*)\1$/, "$2").trim() || undefined;
+
 let client: Anthropic | null = null;
-const getClient = () => (client ??= new Anthropic());
+const getClient = () => (client ??= new Anthropic({ apiKey: cleanEnv(process.env.ANTHROPIC_API_KEY) }));
 
 /** 화면용 메시지(student/hero)를 API 형식(user/assistant)으로 바꾼다. 첫 메시지는 반드시 user여야 한다. */
 function toApiMessages(messages: ChatRequestBody["messages"]): Anthropic.Beta.BetaMessageParam[] {
@@ -112,7 +115,7 @@ export async function POST(req: Request) {
 
 /** 키가 거절됐을 때 원인 파악용: 키 값은 남기지 않고 형태만 로그로 남긴다 */
 function logKeyShape() {
-  const key = process.env.ANTHROPIC_API_KEY ?? "";
+  const key = cleanEnv(process.env.ANTHROPIC_API_KEY) ?? "";
   console.error("[api/chat] ANTHROPIC_API_KEY shape", {
     length: key.length,
     startsWithSkAnt: key.startsWith("sk-ant-"),
