@@ -95,6 +95,7 @@ export async function POST(req: Request) {
       } catch (error) {
         if (req.signal.aborted) return controller.close();
         console.error("[api/chat]", error);
+        if (error instanceof Anthropic.AuthenticationError) logKeyShape();
         controller.enqueue(encoder.encode(errorText(error)));
         controller.close();
       }
@@ -109,7 +110,19 @@ export async function POST(req: Request) {
   });
 }
 
-const MISSING_KEY_TEXT = "⚠️ 히어로 통신기가 연결되지 않았어요. (.env.local의 ANTHROPIC_API_KEY를 확인해 주세요)";
+/** 키가 거절됐을 때 원인 파악용: 키 값은 남기지 않고 형태만 로그로 남긴다 */
+function logKeyShape() {
+  const key = process.env.ANTHROPIC_API_KEY ?? "";
+  console.error("[api/chat] ANTHROPIC_API_KEY shape", {
+    length: key.length,
+    startsWithSkAnt: key.startsWith("sk-ant-"),
+    hasWhitespace: /\s/.test(key),
+    hasQuote: /["']/.test(key),
+    hasEquals: key.includes("="),
+  });
+}
+
+const MISSING_KEY_TEXT ="⚠️ 히어로 통신기가 연결되지 않았어요. (.env.local의 ANTHROPIC_API_KEY를 확인해 주세요)";
 
 function errorText(error: unknown) {
   // AuthenticationError: 키가 틀림 / API 호출 전 SDK 오류(APIError가 아닌 AnthropicError): 인증 정보를 못 찾음
