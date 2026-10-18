@@ -1,5 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { CHARACTERS } from "@/data/characters";
+import { accessCodeFrom, accessDenied, isAccessAllowed } from "@/lib/server/accessCode";
+import { cleanEnv } from "@/lib/server/env";
 import type { CharacterId, Role } from "@/types/chat";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
@@ -9,9 +11,6 @@ interface ChatRequestBody {
   characterId: CharacterId;
   messages: { role: Role; content: string }[];
 }
-
-/** 대시보드에 붙여 넣을 때 섞여 들어가기 쉬운 앞뒤 공백·따옴표를 걷어낸다 */
-const cleanEnv = (value: string | undefined) => value?.trim().replace(/^(["'])(.*)\1$/, "$2").trim() || undefined;
 
 let client: Anthropic | null = null;
 const getClient = () => (client ??= new Anthropic({ apiKey: cleanEnv(process.env.ANTHROPIC_API_KEY) }));
@@ -45,6 +44,8 @@ function isValidBody(body: unknown): body is ChatRequestBody {
 }
 
 export async function POST(req: Request) {
+  if (!isAccessAllowed(accessCodeFrom(req))) return accessDenied();
+
   const body: unknown = await req.json().catch(() => null);
   if (!isValidBody(body)) {
     return Response.json({ error: "잘못된 요청이에요." }, { status: 400 });
