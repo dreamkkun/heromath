@@ -2,14 +2,23 @@ import { CHARACTERS } from "@/data/characters";
 import type { ChatMessage } from "@/types/chat";
 import { HeroAvatar } from "./HeroAvatar";
 import { MathText } from "./MathText";
+import { SolutionCard } from "./SolutionCard";
 
 export function MessageBubble({ message, children }: { message: ChatMessage; children?: React.ReactNode }) {
   if (message.role === "student") {
     // 학생의 말은 공책에 붙인 노란 메모지
     return (
       <div className="flex justify-end">
-        <div className="max-w-[80%] rounded-md rounded-tr-2xl bg-marker-soft px-4 py-3 text-[17px] leading-relaxed whitespace-pre-wrap text-ink shadow-[0_2px_0_color-mix(in_srgb,var(--marker)_70%,var(--ink))]">
-          <MathText text={message.content} />
+        <div className="max-w-[80%] space-y-2 rounded-md rounded-tr-2xl bg-marker-soft px-4 py-3 text-[17px] leading-relaxed whitespace-pre-wrap text-ink shadow-[0_2px_0_color-mix(in_srgb,var(--marker)_70%,var(--ink))]">
+          {message.image && (
+            // eslint-disable-next-line @next/next/no-img-element -- 학생이 올린 사진(data URL)
+            <img
+              src={message.image}
+              alt="내가 올린 문제 사진"
+              className="max-h-72 w-auto max-w-full rounded-md border border-ink/10 bg-white"
+            />
+          )}
+          {message.content && <MathText text={message.content} />}
         </div>
       </div>
     );
@@ -27,7 +36,7 @@ export function MessageBubble({ message, children }: { message: ChatMessage; chi
           className="balloon rounded-2xl border-[2.5px] bg-white px-4 py-3 text-[17px] leading-relaxed whitespace-pre-wrap text-ink"
           style={{ borderColor: hero.themeColor, "--balloon-border": hero.themeColor } as React.CSSProperties}
         >
-          <MathText text={message.content} />
+          {message.solution ? <SolutionCard solution={message.solution} /> : <MathText text={message.content} />}
           {message.solved && (
             <span
               className="animate-stamp absolute -top-8 right-2 -rotate-8 rounded-md border-[2.5px] border-red-600 bg-white/90 px-2 py-0.5 font-display text-base text-red-600 motion-reduce:animate-none"
@@ -43,13 +52,13 @@ export function MessageBubble({ message, children }: { message: ChatMessage; chi
   );
 }
 
-export function TypingBubble({ characterId }: { characterId: ChatMessage["characterId"] }) {
+export function TypingBubble({ characterId, label }: { characterId: ChatMessage["characterId"]; label?: string }) {
   const hero = CHARACTERS[characterId ?? "web_hero"];
   return (
     <div className="flex items-start gap-3" role="status" aria-label={`${hero.name} 생각하는 중`}>
       <HeroAvatar character={hero} />
       <div
-        className="balloon mt-6 flex gap-1.5 rounded-2xl border-[2.5px] bg-white px-4 py-4"
+        className="balloon mt-6 flex items-center gap-1.5 rounded-2xl border-[2.5px] bg-white px-4 py-4"
         style={{ borderColor: hero.themeColor, "--balloon-border": hero.themeColor } as React.CSSProperties}
       >
         {[0, 1, 2].map((i) => (
@@ -59,6 +68,7 @@ export function TypingBubble({ characterId }: { characterId: ChatMessage["charac
             style={{ backgroundColor: hero.themeColor, animationDelay: `${i * 150}ms` }}
           />
         ))}
+        {label && <span className="ml-2 text-[15px] text-ink-soft">{label}</span>}
       </div>
     </div>
   );

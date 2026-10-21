@@ -30,6 +30,25 @@ export interface ChatMessage {
   hidden?: boolean;
   /** 이 답변에서 학생이 정답을 맞혀 배지를 받았는지 */
   solved?: boolean;
+  /** 학생이 올린 문제 사진 (줄인 JPEG data URL) */
+  image?: string;
+  /** 히어로가 보여주는 단계별 풀이 카드 */
+  solution?: Solution;
+}
+
+/** 단계별 풀이. 단계는 하나씩 펼쳐 보고, 정답은 마지막에 확인한다. */
+export interface Solution {
+  /** 히어로가 이해한 문제 (사진 문제를 제대로 읽었는지 확인용) */
+  problem: string;
+  steps: { title: string; explanation: string }[];
+  answer: string;
+}
+
+/** API로 보내는 메시지 형태 (화면 전용 필드는 뺀다) */
+export interface ApiChatMessage {
+  role: Role;
+  content: string;
+  image?: string;
 }
 
 export type LearningMode = "own_problem" | "hero_mission";

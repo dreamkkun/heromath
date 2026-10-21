@@ -1,47 +1,15 @@
-import Anthropic from "@anthropic-ai/sdk";
+import type Anthropic from "@anthropic-ai/sdk";
 import { CHARACTERS } from "@/data/characters";
 import { accessCodeFrom, accessDenied, isAccessAllowed } from "@/lib/server/accessCode";
-import { cleanEnv } from "@/lib/server/env";
-import type { CharacterId, Role } from "@/types/chat";
-
-const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
-const MAX_HISTORY = 40;
-
-interface ChatRequestBody {
-  characterId: CharacterId;
-  messages: { role: Role; content: string }[];
-}
-
-let client: Anthropic | null = null;
-const getClient = () => (client ??= new Anthropic({ apiKey: cleanEnv(process.env.ANTHROPIC_API_KEY) }));
-
-/** 화면용 메시지(student/hero)를 API 형식(user/assistant)으로 바꾼다. 첫 메시지는 반드시 user여야 한다. */
-function toApiMessages(messages: ChatRequestBody["messages"]): Anthropic.Beta.BetaMessageParam[] {
-  const recent = messages.slice(-MAX_HISTORY);
-  const firstUser = recent.findIndex((m) => m.role === "student");
-  if (firstUser === -1) return [];
-  return recent
-    .slice(firstUser)
-    .filter((m) => m.content.trim())
-    .map((m) => ({ role: m.role === "student" ? "user" : "assistant", content: m.content }));
-}
-
-function isValidBody(body: unknown): body is ChatRequestBody {
-  if (!body || typeof body !== "object") return false;
-  const b = body as Record<string, unknown>;
-  return (
-    typeof b.characterId === "string" &&
-    b.characterId in CHARACTERS &&
-    Array.isArray(b.messages) &&
-    b.messages.every(
-      (m) =>
-        m &&
-        typeof m === "object" &&
-        (m.role === "student" || m.role === "hero") &&
-        typeof m.content === "string",
-    )
-  );
-}
+import {
+  errorText,
+  FALLBACK_BETA,
+  getClient,
+  isValidBody,
+  MISSING_KEY_TEXT,
+  MODEL,
+  toApiMessages,
+} from "@/lib/server/claude";
 
 export async function POST(req: Request) {
   if (!isAccessAllowed(accessCodeFrom(req))) return accessDenied();
@@ -73,8 +41,7 @@ export async function POST(req: Request) {
       output_config: { effort: "low" },
       system: [{ type: "text", text: character.systemPrompt, cache_control: { type: "ephemeral" } }],
       messages,
-      // 안전 분류기가 거절하면 서버에서 다른 모델로 자동 재시도
-      betas: ["server-side-fallback-2026-07-01"],
+      betas: [FALLBACK_BETA],
       fallbacks: "default",
     },
     { signal: req.signal },
@@ -111,23 +78,4 @@ export async function POST(req: Request) {
   return new Response(body$, {
     headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
   });
-}
-
-const MISSING_KEY_TEXT ="⚠️ 히어로 통신기가 연결되지 않았어요. (.env.local의 ANTHROPIC_API_KEY를 확인해 주세요)";
-
-function errorText(error: unknown) {
-  // AuthenticationError: 키가 틀림 / API 호출 전 SDK 오류(APIError가 아닌 AnthropicError): 인증 정보를 못 찾음
-  if (
-    error instanceof Anthropic.AuthenticationError ||
-    (error instanceof Anthropic.AnthropicError && !(error instanceof Anthropic.APIError))
-  ) {
-    return MISSING_KEY_TEXT;
-  }
-  if (error instanceof Anthropic.RateLimitError) {
-    return "⚠️ 지금 히어로 본부가 너무 바빠요. 잠시 후 다시 물어봐 줄래?";
-  }
-  if (error instanceof Anthropic.APIError) {
-    return `⚠️ 히어로 통신에 문제가 생겼어요. (${error.status ?? "연결 오류"})`;
-  }
-  return "⚠️ 히어로 통신에 문제가 생겼어요. 다시 시도해 줄래?";
 }
