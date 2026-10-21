@@ -74,13 +74,48 @@ export const CHARACTERS = Object.fromEntries(CHARACTER_LIST.map((c) => [c.id, c]
 
 export const DEFAULT_CHARACTER_ID: CharacterId = "web_hero";
 
+/** 단원별로 문제·퀴즈가 다룰 4학년 교육과정 주제. 퀴즈는 이 범위 밖 개념을 쓰지 않는다. */
 export const UNITS = [
-  { id: "big_numbers", label: "큰 수", emoji: "🔢" },
-  { id: "angles", label: "각도와 도형", emoji: "📐" },
-  { id: "fractions", label: "분수", emoji: "🍕" },
-  { id: "decimals", label: "소수", emoji: "🔟" },
-  { id: "patterns", label: "그래프와 규칙", emoji: "📈" },
+  {
+    id: "big_numbers",
+    label: "큰 수",
+    emoji: "🔢",
+    topics: ["만·억·조 단위 읽고 쓰기", "자릿값과 각 자리 숫자가 나타내는 값", "10배, 100배 하며 뛰어 세기", "큰 수의 크기 비교"],
+  },
+  {
+    id: "angles",
+    label: "각도와 도형",
+    emoji: "📐",
+    topics: [
+      "예각·직각·둔각 구별",
+      "각도의 합과 차",
+      "삼각형 세 각의 합 180°",
+      "사각형 네 각의 합 360°",
+      "이등변삼각형과 정삼각형",
+      "수직과 평행, 사다리꼴·평행사변형·마름모",
+    ],
+  },
+  {
+    id: "fractions",
+    label: "분수",
+    emoji: "🍕",
+    topics: ["진분수·가분수·대분수", "분모가 같은 분수의 덧셈", "분모가 같은 분수의 뺄셈", "1(자연수)에서 분수 빼기"],
+  },
+  {
+    id: "decimals",
+    label: "소수",
+    emoji: "🔟",
+    topics: ["소수 두 자리·세 자리 읽기", "소수의 자릿값", "소수의 크기 비교", "소수의 덧셈과 뺄셈"],
+  },
+  {
+    id: "patterns",
+    label: "그래프와 규칙",
+    emoji: "📈",
+    topics: ["막대그래프 읽기", "꺾은선그래프 읽기와 변화 알아보기", "수 배열에서 규칙 찾기", "계산식의 규칙 찾기"],
+  },
 ] as const;
+
+export const unitById = (id: string) => UNITS.find((u) => u.id === id);
 
 export const WORD_PROBLEM_STEPS = [
   { step: 1, label: "1단계: 무엇을 구해야 할까?" },

@@ -13,6 +13,9 @@ export function isStepChip(text: string) {
 
 /** 모드 B: 화면에는 숨기고 API에만 보내는 미션 출제 요청 문장 */
 export function missionRequest(unit: UnitId) {
-  const label = UNITS.find((u) => u.id === unit)?.label ?? unit;
-  return `[미션 요청] "${label}" 단원에서 초등 4학년 수준의 히어로 스토리 문장제 문제를 딱 하나 내 줘. 정답이나 풀이는 말하지 말고, 문제만 내고 내가 먼저 생각해 보도록 질문으로 끝내 줘.`;
+  const info = UNITS.find((u) => u.id === unit);
+  if (!info) return `[미션 요청] 초등 4학년 수준의 히어로 스토리 문장제 문제를 딱 하나 내 줘.`;
+  // 매번 같은 문제가 나오지 않도록 단원 주제 중 하나를 골라 준다
+  const topic = info.topics[Math.floor(Math.random() * info.topics.length)];
+  return `[미션 요청] "${info.label}" 단원의 "${topic}" 주제로 초등 4학년 수준의 히어로 스토리 문장제 문제를 딱 하나 내 줘. 정답이나 풀이는 말하지 말고, 문제만 내고 내가 먼저 생각해 보도록 질문으로 끝내 줘.`;
 }

@@ -2,9 +2,16 @@ import { CHARACTERS } from "@/data/characters";
 import type { ChatMessage } from "@/types/chat";
 import { HeroAvatar } from "./HeroAvatar";
 import { MathText } from "./MathText";
+import { QuizCard } from "./QuizCard";
 import { SolutionCard } from "./SolutionCard";
 
-export function MessageBubble({ message, children }: { message: ChatMessage; children?: React.ReactNode }) {
+interface MessageBubbleProps {
+  message: ChatMessage;
+  onQuizPerfect?: () => void;
+  children?: React.ReactNode;
+}
+
+export function MessageBubble({ message, onQuizPerfect, children }: MessageBubbleProps) {
   if (message.role === "student") {
     // 학생의 말은 공책에 붙인 노란 메모지
     return (
@@ -36,7 +43,13 @@ export function MessageBubble({ message, children }: { message: ChatMessage; chi
           className="balloon rounded-2xl border-[2.5px] bg-white px-4 py-3 text-[17px] leading-relaxed whitespace-pre-wrap text-ink"
           style={{ borderColor: hero.themeColor, "--balloon-border": hero.themeColor } as React.CSSProperties}
         >
-          {message.solution ? <SolutionCard solution={message.solution} /> : <MathText text={message.content} />}
+          {message.quiz ? (
+            <QuizCard quiz={message.quiz} rewarded={Boolean(message.solved)} onPerfect={() => onQuizPerfect?.()} />
+          ) : message.solution ? (
+            <SolutionCard solution={message.solution} />
+          ) : (
+            <MathText text={message.content} />
+          )}
           {message.solved && (
             <span
               className="animate-stamp absolute -top-8 right-2 -rotate-8 rounded-md border-[2.5px] border-red-600 bg-white/90 px-2 py-0.5 font-display text-base text-red-600 motion-reduce:animate-none"

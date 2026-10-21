@@ -11,7 +11,9 @@ interface MessageListProps {
   thinkingCharacterId: CharacterId;
   onQuickAction: (label: string) => void;
   onShowSolution: () => void;
-  loadingSolution: boolean;
+  onQuizPerfect: (messageId: string) => void;
+  /** 풀이·퀴즈를 기다리는 중이면 그 문구 */
+  pendingLabel: string | null;
 }
 
 export function MessageList({
@@ -20,13 +22,14 @@ export function MessageList({
   thinkingCharacterId,
   onQuickAction,
   onShowSolution,
-  loadingSolution,
+  onQuizPerfect,
+  pendingLabel,
 }: MessageListProps) {
   const endRef = useRef<HTMLDivElement>(null);
   const visible = messages.filter((m) => !m.hidden);
   const last = visible.at(-1);
-  // 답변이 스트리밍되기 시작하면 '생각 중' 표시는 숨긴다. 풀이는 한 번에 오니 끝날 때까지 보인다.
-  const showTyping = isThinking && (loadingSolution || messages.at(-1)?.role === "student");
+  // 답변이 스트리밍되기 시작하면 '생각 중' 표시는 숨긴다. 풀이·퀴즈는 한 번에 오니 끝날 때까지 보인다.
+  const showTyping = isThinking && (pendingLabel !== null || messages.at(-1)?.role === "student");
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -35,14 +38,14 @@ export function MessageList({
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-5 px-4 py-6" aria-live="polite">
       {visible.map((m) => (
-        <MessageBubble key={m.id} message={m}>
+        <MessageBubble key={m.id} message={m} onQuizPerfect={() => onQuizPerfect(m.id)}>
           {m.showWordProblemSteps && m.id === last?.id && !isThinking && (
             <QuickActions onPick={onQuickAction} onShowSolution={onShowSolution} disabled={isThinking} />
           )}
         </MessageBubble>
       ))}
       {showTyping && (
-        <TypingBubble characterId={thinkingCharacterId} label={loadingSolution ? "풀이를 정리하고 있어" : undefined} />
+        <TypingBubble characterId={thinkingCharacterId} label={pendingLabel ?? undefined} />
       )}
       <div ref={endRef} />
     </div>

@@ -34,6 +34,21 @@ export interface ChatMessage {
   image?: string;
   /** 히어로가 보여주는 단계별 풀이 카드 */
   solution?: Solution;
+  /** 히어로가 내는 개념 퀴즈 카드 */
+  quiz?: Quiz;
+}
+
+/** 개념 퀴즈. 문제마다 짧은 '알아두기' 설명을 먼저 보여주고 객관식으로 확인한다. */
+export interface Quiz {
+  title: string;
+  intro: string;
+  questions: {
+    lesson: string;
+    question: string;
+    choices: string[];
+    answerIndex: number;
+    explanation: string;
+  }[];
 }
 
 /** 단계별 풀이. 단계는 하나씩 펼쳐 보고, 정답은 마지막에 확인한다. */

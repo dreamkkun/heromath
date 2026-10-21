@@ -1,5 +1,5 @@
 import { ACCESS_CODE_HEADER, ACCESS_REVOKED_EVENT, loadAccessCode } from "@/lib/accessCode";
-import type { ApiChatMessage, CharacterId, ChatMessage, Solution } from "@/types/chat";
+import type { ApiChatMessage, CharacterId, ChatMessage, Quiz, Solution, UnitId } from "@/types/chat";
 
 /** 사진은 용량이 커서 최근 2장만 보낸다 (서버도 같은 기준으로 자른다) */
 const MAX_IMAGES = 2;
@@ -83,4 +83,24 @@ export async function fetchSolution(
 export function solutionToText(solution: Solution) {
   const steps = solution.steps.map((s, i) => `${i + 1}) ${s.title}: ${s.explanation}`).join("\n");
   return `[단계별 풀이] ${solution.problem}\n${steps}\n정답: ${solution.answer}`;
+}
+
+/** `/api/quiz`에서 단원 개념 퀴즈를 받는다. 실패하면 아이에게 보여줄 문장을 error로 돌려준다. */
+export async function fetchQuiz(
+  characterId: CharacterId,
+  unit: UnitId,
+  signal?: AbortSignal,
+): Promise<{ quiz: Quiz } | { error: string }> {
+  const res = await post("/api/quiz", JSON.stringify({ characterId, unit }), signal);
+  if (revokeIfUnauthorized(res)) return { error: "🔒 비밀 작전 코드를 다시 입력해 줘!" };
+  if (!res.ok) return { error: (await errorMessage(res)) || "⚠️ 퀴즈를 가져오지 못했어. 다시 눌러 줄래?" };
+  return (await res.json()) as { quiz: Quiz };
+}
+
+/** 퀴즈 카드를 대화 기록용 글로 바꾼다 (퀴즈 뒤에 아이가 질문하면 히어로가 맥락을 알도록) */
+export function quizToText(quiz: Quiz) {
+  const items = quiz.questions
+    .map((q, i) => `${i + 1}) ${q.lesson} 문제: ${q.question} 정답: ${q.choices[q.answerIndex]}`)
+    .join("\n");
+  return `[개념 퀴즈] ${quiz.title}\n${items}`;
 }

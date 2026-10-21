@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CHARACTERS } from "@/data/characters";
+import { CHARACTERS, unitById } from "@/data/characters";
 import { fireConfetti, playFanfare } from "@/lib/celebrate";
-import { fetchSolution, solutionToText, streamChat } from "@/lib/chatClient";
+import { fetchQuiz, fetchSolution, quizToText, solutionToText, streamChat } from "@/lib/chatClient";
 import { cleanStreamText } from "@/lib/correctMarker";
 import { isStepChip, looksLikeWordProblem, missionRequest } from "@/lib/wordProblem";
 import { useActiveCharacter, useHeroStore } from "@/store/heroStore";
-import type { UnitId } from "@/types/chat";
+import type { ChatMessage, UnitId } from "@/types/chat";
 import { BadgeToast } from "./BadgeToast";
 import { ChatInput } from "./ChatInput";
 import { Header } from "./Header";
@@ -26,7 +26,8 @@ export function ChatRoom() {
     useHeroStore.getState();
   const abortRef = useRef<AbortController>(null);
   const [toastKey, setToastKey] = useState<number | null>(null);
-  const [loadingSolution, setLoadingSolution] = useState(false);
+  /** 풀이·퀴즈처럼 한 번에 오는 카드를 기다리는 동안 보여줄 문구 */
+  const [pendingLabel, setPendingLabel] = useState<string | null>(null);
   const hideToast = useCallback(() => setToastKey(null), []);
 
   useEffect(() => {
@@ -96,34 +97,64 @@ export function ChatRoom() {
     void ask(text, { image, wordProblem: Boolean(image) || looksLikeWordProblem(text) || isStepChip(text) });
   };
 
-  /** 지금 문제의 단계별 풀이 카드를 받아 대화에 붙인다 */
-  const showSolution = async () => {
-    const { characterId, messages: history, isThinking: busy } = useHeroStore.getState();
+  /**
+   * 한 번에 오는 카드(풀이·퀴즈)를 받아 대화에 붙인다. 받는 동안 '생각 중' 말풍선에 label을 보여 준다.
+   * load는 성공하면 히어로 메시지로 붙일 내용을, 실패하면 아이에게 보여줄 error 문장을 돌려준다.
+   */
+  const fetchCard = async (
+    label: string,
+    load: (signal: AbortSignal) => Promise<Partial<ChatMessage> & { content: string }>,
+  ) => {
+    const { characterId, isThinking: busy } = useHeroStore.getState();
     if (busy) return;
 
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
     setThinking(true);
-    setLoadingSolution(true);
+    setPendingLabel(label);
     try {
-      const result = await fetchSolution(characterId, history, controller.signal);
-      if ("solution" in result) {
-        addMessage({ role: "hero", characterId, content: solutionToText(result.solution), solution: result.solution });
-      } else {
-        addMessage({ role: "hero", characterId, content: result.error });
-      }
+      const message = await load(controller.signal);
+      addMessage({ role: "hero", characterId, ...message });
     } catch (error) {
       if (!controller.signal.aborted) {
         console.error(error);
-        addMessage({ role: "hero", characterId, content: "⚠️ 풀이를 가져오지 못했어. 다시 눌러 줄래?" });
+        addMessage({ role: "hero", characterId, content: "⚠️ 히어로 통신이 끊겼어요. 다시 눌러 줄래?" });
       }
     } finally {
       if (abortRef.current === controller) {
         setThinking(false);
-        setLoadingSolution(false);
+        setPendingLabel(null);
       }
     }
+  };
+
+  /** 지금 문제의 단계별 풀이 카드 */
+  const showSolution = () =>
+    fetchCard("풀이를 정리하고 있어", async (signal) => {
+      const { characterId, messages: history } = useHeroStore.getState();
+      const result = await fetchSolution(characterId, history, signal);
+      return "solution" in result
+        ? { content: solutionToText(result.solution), solution: result.solution }
+        : { content: result.error };
+    });
+
+  /** 단원 개념 퀴즈 카드. 아이가 무엇을 골랐는지 메모지로 먼저 남긴다. */
+  const startQuiz = (unit: UnitId) => {
+    if (useHeroStore.getState().isThinking) return;
+    addMessage({ role: "student", content: `💡 ${unitById(unit)?.label ?? ""} 개념 퀴즈 풀래!` });
+    void fetchCard("퀴즈를 만들고 있어", async (signal) => {
+      const result = await fetchQuiz(useHeroStore.getState().characterId, unit, signal);
+      return "quiz" in result ? { content: quizToText(result.quiz), quiz: result.quiz } : { content: result.error };
+    });
+  };
+
+  /** 퀴즈를 처음 도전에서 다 맞히면 배지 (같은 퀴즈로는 한 번만) */
+  const rewardQuiz = (messageId: string) => {
+    const message = useHeroStore.getState().messages.find((m) => m.id === messageId);
+    if (!message || message.solved) return;
+    updateMessage(messageId, { solved: true });
+    celebrate();
   };
 
   const pickUnit = (unit: UnitId) => {
@@ -144,14 +175,21 @@ export function ChatRoom() {
           isThinking={isThinking}
           thinkingCharacterId={character.id}
           onQuickAction={sendStudentMessage}
-          onShowSolution={showSolution}
-          loadingSolution={loadingSolution}
+          onShowSolution={() => void showSolution()}
+          onQuizPerfect={rewardQuiz}
+          pendingLabel={pendingLabel}
         />
       </main>
 
       <footer className="border-t-2 border-grid bg-white pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto max-w-3xl space-y-3 px-4 py-3">
-          <ModeSelector mode={mode} onModeChange={setMode} onPickUnit={pickUnit} disabled={isThinking} />
+          <ModeSelector
+            mode={mode}
+            onModeChange={setMode}
+            onPickUnit={pickUnit}
+            onPickQuiz={startQuiz}
+            disabled={isThinking}
+          />
           <ChatInput onSend={sendStudentMessage} allowImage={mode === "own_problem"} disabled={isThinking} />
         </div>
       </footer>
