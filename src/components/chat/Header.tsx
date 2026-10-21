@@ -1,6 +1,7 @@
 "use client";
 
-import { Medal, Volume2, VolumeX } from "lucide-react";
+import { Gamepad2, Medal, Volume2, VolumeX } from "lucide-react";
+import Link from "next/link";
 
 interface HeaderProps {
   badges: number;
@@ -22,6 +23,15 @@ export function Header({ badges, soundOn, onToggleSound }: HeaderProps) {
           </span>
           히어로 매스
         </h1>
+
+        <Link
+          href="/game"
+          aria-label="쉬는 시간 게임"
+          className="flex h-11 items-center gap-1.5 rounded-full px-3 text-[15px] text-ink-soft hover:bg-paper hover:text-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        >
+          <Gamepad2 className="h-5 w-5" aria-hidden />
+          <span className="max-sm:hidden">쉬는 시간</span>
+        </Link>
 
         <button
           type="button"
