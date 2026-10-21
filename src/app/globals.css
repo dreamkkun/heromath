@@ -1,9 +1,13 @@
 @import "tailwindcss";
 
+/* 히어로 수학 공책: 푸른 모눈 종이 + 남색 연필 잉크 + 형광펜 노랑 */
 :root {
-  --ink: #1c1917;
-  --ink-soft: #78716c;
-  --paper: #fff8e7;
+  --ink: #1c2b4b;
+  --ink-soft: #5a6a86;
+  --paper: #f5f9ff;
+  --grid: #d5e3f5;
+  --marker: #ffe45c;
+  --marker-soft: #fff4b0;
   --hero: #e11d48;
 }
 
@@ -11,12 +15,16 @@
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
   --color-paper: var(--paper);
-  --font-sans: var(--font-noto-kr), system-ui, sans-serif;
-  --font-display: var(--font-jua), var(--font-noto-kr), sans-serif;
+  --color-grid: var(--grid);
+  --color-marker: var(--marker);
+  --color-marker-soft: var(--marker-soft);
+  --font-sans: var(--font-gowun), system-ui, sans-serif;
+  --font-display: var(--font-jua), var(--font-gowun), sans-serif;
 
   --animate-bump: bump 450ms ease-out;
   --animate-pop-in: pop-in 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
   --animate-stamp: stamp 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-hero-in: hero-in 420ms cubic-bezier(0.22, 1.2, 0.36, 1);
 
   @keyframes bump {
     0% { transform: scale(1); }
@@ -28,8 +36,13 @@
     to { opacity: 1; transform: none; }
   }
   @keyframes stamp {
-    from { opacity: 0; transform: rotate(12deg) scale(2); }
-    to { opacity: 1; transform: rotate(12deg) scale(1); }
+    from { opacity: 0; transform: rotate(-8deg) scale(2); }
+    to { opacity: 1; transform: rotate(-8deg) scale(1); }
+  }
+  /* 히어로를 바꿀 때 명판의 엠블럼이 튀어나오는 한 번의 순간 */
+  @keyframes hero-in {
+    from { opacity: 0; transform: translateX(-16px) scale(0.6) rotate(-12deg); }
+    to { opacity: 1; transform: none; }
   }
 }
 
@@ -37,15 +50,74 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-sans);
+  /* 한국어는 낱말 단위로 줄을 바꾸고, 아주 긴 문자열만 어디서든 끊는다 */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
-/* 만화책 느낌의 하프톤 도트 배경 */
-.halftone {
+/* 수학 공책 모눈: 24px 칸, 5칸마다 조금 진한 선 */
+.graph-paper {
   background-color: var(--paper);
-  background-image: radial-gradient(color-mix(in srgb, var(--hero) 14%, transparent) 1.2px, transparent 1.2px);
-  background-size: 14px 14px;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--grid) 100%, var(--ink) 8%) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--grid) 100%, var(--ink) 8%) 1px, transparent 1px),
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  background-position: -1px -1px;
+}
+
+/* 만화의 집중선: 히어로 명판 배경 */
+.speed-lines {
+  background-color: var(--hero);
+  background-image: repeating-conic-gradient(
+    from 0deg at 12% 50%,
+    color-mix(in srgb, white 14%, transparent) 0deg 3deg,
+    transparent 3deg 9deg
+  );
+}
+
+/* 눌리는 버튼: 아래쪽 두꺼운 테두리가 눌리면 사라진다 */
+.btn-press {
+  border-bottom-width: 4px;
+  transition: transform 80ms ease-out, border-bottom-width 80ms ease-out;
+}
+.btn-press:active:not(:disabled) {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+
+/* 히어로 말풍선 꼬리 */
+.balloon {
+  position: relative;
+}
+.balloon::before,
+.balloon::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+.balloon::before {
+  left: -12px;
+  border-width: 9px 12px 9px 0;
+  border-color: transparent var(--balloon-border) transparent transparent;
+}
+.balloon::after {
+  left: -8px;
+  top: 16px;
+  border-width: 7px 9px 7px 0;
+  border-color: transparent white transparent transparent;
 }
 
 .katex {
   font-size: 1.1em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-press {
+    transition: none;
+  }
 }

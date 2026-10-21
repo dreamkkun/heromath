@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Jua, Noto_Sans_KR } from "next/font/google";
+import { Gowun_Dodum, Jua } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 
@@ -9,8 +9,10 @@ const display = Jua({
   subsets: ["latin"],
 });
 
-const body = Noto_Sans_KR({
-  variable: "--font-noto-kr",
+// 손글씨처럼 둥근 본문 글꼴 (굵기는 400 하나뿐이라 강조는 Jua + 히어로 색으로 한다)
+const body = Gowun_Dodum({
+  variable: "--font-gowun",
+  weight: "400",
   subsets: ["latin"],
 });
 

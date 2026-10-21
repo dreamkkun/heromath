@@ -8,7 +8,11 @@ const BOLD_PATTERN = /(\*\*[^*\n]+?\*\*)/g;
 function PlainText({ text }: { text: string }) {
   return text.split(BOLD_PATTERN).map((part, i) =>
     part.startsWith("**") && part.endsWith("**") && part.length > 4 ? (
-      <strong key={i} className="font-bold text-[var(--hero)]">
+      // 굵게 대신 공책에 형광펜을 칠한 것처럼 강조한다
+      <strong
+        key={i}
+        className="bg-[linear-gradient(transparent_55%,var(--marker)_55%)] px-0.5 font-normal [box-decoration-break:clone]"
+      >
         {part.slice(2, -2)}
       </strong>
     ) : (

@@ -27,7 +27,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
       className="flex items-end gap-2"
     >
       <label htmlFor="chat-input" className="sr-only">
-        문제나 질문 입력
+        문제나 내 생각 쓰기
       </label>
       <textarea
         id="chat-input"
@@ -41,14 +41,15 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
             submit();
           }
         }}
-        placeholder="문제를 입력하거나 질문하세요..."
-        className="field-sizing-content max-h-40 min-h-12 flex-1 resize-none rounded-2xl border-2 border-ink bg-white px-4 py-3 text-base text-ink placeholder:text-ink-soft focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--hero)]"
+        placeholder="문제나 생각을 적어 봐"
+        className="field-sizing-content max-h-40 min-h-12 flex-1 resize-none rounded-2xl border-2 border-grid bg-white px-4 py-3 text-[17px] text-ink placeholder:text-ink-soft focus:border-[var(--hero)] focus:outline-none focus-visible:ring-3 focus-visible:ring-[color-mix(in_srgb,var(--hero)_25%,transparent)]"
       />
       <button
         type="submit"
         disabled={disabled || !value.trim()}
         aria-label="보내기"
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 border-ink bg-[var(--hero)] text-white shadow-[3px_3px_0_var(--ink)] transition-transform active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-40 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        className="btn-press flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 bg-[var(--hero)] text-white disabled:opacity-40 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        style={{ borderColor: "color-mix(in srgb, var(--hero) 65%, black)" }}
       >
         <SendHorizontal className="h-5 w-5" aria-hidden />
       </button>

@@ -9,9 +9,9 @@ import { isStepChip, looksLikeWordProblem, missionRequest } from "@/lib/wordProb
 import { useActiveCharacter, useHeroStore } from "@/store/heroStore";
 import type { UnitId } from "@/types/chat";
 import { BadgeToast } from "./BadgeToast";
-import { CharacterBar } from "./CharacterBar";
 import { ChatInput } from "./ChatInput";
 import { Header } from "./Header";
+import { HeroPlate } from "./HeroPlate";
 import { MessageList } from "./MessageList";
 import { ModeSelector } from "./ModeSelector";
 
@@ -100,16 +100,10 @@ export function ChatRoom() {
       className="flex h-dvh flex-col bg-paper"
       style={{ "--hero": character.themeColor } as React.CSSProperties}
     >
-      <Header
-        character={character}
-        badges={badges}
-        soundOn={soundOn}
-        onToggleSound={toggleSound}
-        onChangeCharacter={selectCharacter}
-      />
-      <CharacterBar activeId={character.id} onSelect={selectCharacter} />
+      <Header badges={badges} soundOn={soundOn} onToggleSound={toggleSound} />
+      <HeroPlate character={character} onSelect={selectCharacter} />
 
-      <main className="halftone flex-1 overflow-y-auto">
+      <main className="graph-paper flex-1 overflow-y-auto">
         <MessageList
           messages={messages}
           isThinking={isThinking}
@@ -118,7 +112,7 @@ export function ChatRoom() {
         />
       </main>
 
-      <footer className="border-t-[3px] border-ink bg-white pb-[env(safe-area-inset-bottom)]">
+      <footer className="border-t-2 border-grid bg-white pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto max-w-3xl space-y-3 px-4 py-3">
           <ModeSelector mode={mode} onModeChange={setMode} onPickUnit={pickUnit} disabled={isThinking} />
           <ChatInput onSend={sendStudentMessage} disabled={isThinking} />

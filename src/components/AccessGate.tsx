@@ -2,6 +2,7 @@
 
 import { KeyRound, LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { CHARACTER_LIST } from "@/data/characters";
 import { ACCESS_CODE_HEADER, ACCESS_REVOKED_EVENT, loadAccessCode, saveAccessCode } from "@/lib/accessCode";
 
 type GateState = "checking" | "locked" | "open";
@@ -61,26 +62,27 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
       saveAccessCode(trimmed);
       setState("open");
     } else {
-      setError("코드가 달라요. 다시 확인해 줄래?");
+      setError("코드가 맞지 않아. 어른에게 코드를 다시 확인해 줘.");
     }
   };
 
   return (
-    <main className="halftone flex min-h-dvh items-center justify-center px-4 py-10">
-      <form
-        onSubmit={submit}
-        className="w-full max-w-sm space-y-5 rounded-3xl border-[3px] border-ink bg-white p-6 shadow-[6px_6px_0_var(--ink)]"
-      >
-        <div className="space-y-2 text-center">
-          <p className="text-5xl" aria-hidden>
-            🛡️
+    <main className="graph-paper flex min-h-dvh items-center justify-center px-4 py-10">
+      <form onSubmit={submit} className="w-full max-w-sm space-y-6 rounded-3xl border-2 border-grid bg-white p-6 sm:p-8">
+        <div className="space-y-3 text-center">
+          <p className="flex justify-center gap-1.5 text-3xl" aria-hidden>
+            {CHARACTER_LIST.map((c) => (
+              <span key={c.id} className="flex h-12 w-12 items-center justify-center rounded-full border-[2.5px] bg-white" style={{ borderColor: c.themeColor }}>
+                {c.emblem}
+              </span>
+            ))}
           </p>
-          <h1 className="font-display text-2xl text-ink">HERO MATH ACADEMY</h1>
-          <p className="text-sm text-ink-soft">히어로 본부에 들어가려면 비밀 작전 코드가 필요해!</p>
+          <h1 className="font-display text-3xl text-ink">히어로 매스</h1>
+          <p className="text-[17px] leading-relaxed text-ink-soft">히어로 본부에 들어가려면 비밀 작전 코드를 입력해 줘.</p>
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="access-code" className="block text-sm font-bold text-ink">
+          <label htmlFor="access-code" className="block font-display text-base text-ink">
             비밀 작전 코드
           </label>
           <input
@@ -92,10 +94,10 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
             onChange={(e) => setCode(e.target.value)}
             aria-invalid={Boolean(error)}
             aria-describedby={error ? "access-error" : undefined}
-            className="h-12 w-full rounded-2xl border-2 border-ink bg-white px-4 text-base text-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--hero)]"
+            className="h-12 w-full rounded-2xl border-2 border-grid bg-white px-4 text-[17px] text-ink focus:border-[var(--hero)] focus:outline-none aria-[invalid=true]:border-red-500"
           />
           {error && (
-            <p id="access-error" role="alert" className="text-sm font-bold text-red-600">
+            <p id="access-error" role="alert" className="text-[15px] text-red-600">
               {error}
             </p>
           )}
@@ -104,14 +106,15 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
         <button
           type="submit"
           disabled={submitting || !code.trim()}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-ink bg-[var(--hero)] font-display text-lg text-white shadow-[3px_3px_0_var(--ink)] transition-transform active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          className="btn-press flex h-13 w-full items-center justify-center gap-2 rounded-2xl border-2 bg-[var(--hero)] font-display text-xl text-white disabled:opacity-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          style={{ borderColor: "color-mix(in srgb, var(--hero) 65%, black)" }}
         >
           {submitting ? (
             <LoaderCircle className="h-5 w-5 animate-spin motion-reduce:animate-none" aria-hidden />
           ) : (
             <KeyRound className="h-5 w-5" aria-hidden />
           )}
-          출동!
+          본부로 들어가기
         </button>
       </form>
     </main>
