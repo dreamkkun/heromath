@@ -1,4 +1,4 @@
-export type CharacterId = "web_hero" | "iron_brain" | "thunder_hammer" | "captain_shield";
+export type CharacterId = "web_hero" | "iron_brain" | "thunder_hammer" | "captain_shield" | "mystic_sorcerer";
 
 export interface Character {
   id: CharacterId;

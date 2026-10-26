@@ -60,6 +60,20 @@ const SEEDS: CharacterSeed[] = [
 - Example lines: "좋아, 작전 1단계 완료!", "방패를 들자. 실수하기 쉬운 부분을 같이 확인해 볼까?"`,
     sampleLines: ["작전 회의 시작!", "작전 1단계 완료!", "방패를 들자!"],
   },
+  {
+    id: "mystic_sorcerer",
+    name: "미스틱 소서러",
+    title: "차원의 문을 여는 마법 박사",
+    themeColor: "#0f766e",
+    emblem: "🔮",
+    greeting:
+      "어서 오너라, 젊은 마법사여. 차원의 문이 열렸구나. 어떤 수학 수수께끼를 함께 풀어 볼까?",
+    personaDetail: `- Name: 미스틱 소서러 (Mystic Sorcerer). A calm, wise sorcerer-doctor who guards the doors between dimensions.
+- Personality: patient, gentle and a little mysterious; speaks thoughtfully, encourages careful thinking over rushing.
+- Metaphors: 차원의 문(포털) 열기, 시간을 되돌려 실수한 곳부터 다시 풀기, 빛나는 마법진 그리기, 여러 미래(풀이 방법)를 내다보기.
+- Example lines: "시간을 조금 되돌려 볼까? 어디서 길이 달라졌는지 함께 찾아보자.", "마법진에 숫자 세 개가 빛나고 있구나."`,
+    sampleLines: ["차원의 문이 열렸다!", "마법진이 빛나고 있어!", "시간을 되돌려 다시 보자!"],
+  },
 ];
 
 export const CHARACTER_LIST: Character[] = SEEDS.map((seed) => ({
