@@ -117,6 +117,32 @@ export const UNITS = [
 
 export const unitById = (id: string) => UNITS.find((u) => u.id === id);
 
+/** 문제 이야기 소재. 매번 다른 소재를 골라 같은 단원이라도 다른 상황의 문제가 나오게 한다. */
+export const STORY_THEMES = [
+  "놀이공원",
+  "바닷속 탐험",
+  "우주 정거장",
+  "학교 운동회",
+  "동네 빵집",
+  "동물원",
+  "캠핑장",
+  "도서관",
+  "과일 가게",
+  "축구 경기",
+  "꽃밭 가꾸기",
+  "기차 여행",
+  "과학 실험실",
+  "눈썰매장",
+  "로봇 공장",
+  "숲속 보물찾기",
+  "수영장",
+  "시장 장보기",
+  "공룡 박물관",
+  "생일 파티",
+] as const;
+
+export const pickTheme = () => STORY_THEMES[Math.floor(Math.random() * STORY_THEMES.length)];
+
 export const WORD_PROBLEM_STEPS = [
   { step: 1, label: "1단계: 무엇을 구해야 할까?" },
   { step: 2, label: "2단계: 숨겨진 단서 찾기" },

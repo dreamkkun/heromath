@@ -1,4 +1,4 @@
-import { UNITS, WORD_PROBLEM_STEPS } from "@/data/characters";
+import { pickTheme, UNITS, WORD_PROBLEM_STEPS } from "@/data/characters";
 import type { UnitId } from "@/types/chat";
 
 /** 숫자와 한글 문장이 함께 있으면 문장제로 본다 */
@@ -12,10 +12,14 @@ export function isStepChip(text: string) {
 }
 
 /** 모드 B: 화면에는 숨기고 API에만 보내는 미션 출제 요청 문장 */
-export function missionRequest(unit: UnitId) {
+export function missionRequest(unit: UnitId, recent: string[] = []) {
   const info = UNITS.find((u) => u.id === unit);
   if (!info) return `[미션 요청] 초등 4학년 수준의 히어로 스토리 문장제 문제를 딱 하나 내 줘.`;
-  // 매번 같은 문제가 나오지 않도록 단원 주제 중 하나를 골라 준다
+  // 매번 같은 문제가 나오지 않도록 단원 주제와 이야기 소재를 골라 주고, 최근 문제는 피하게 한다
   const topic = info.topics[Math.floor(Math.random() * info.topics.length)];
-  return `[미션 요청] "${info.label}" 단원의 "${topic}" 주제로 초등 4학년 수준의 히어로 스토리 문장제 문제를 딱 하나 내 줘. 정답이나 풀이는 말하지 말고, 문제만 내고 내가 먼저 생각해 보도록 질문으로 끝내 줘.`;
+  const avoid =
+    recent.length > 0
+      ? ` 최근에 이미 낸 문제들과 같거나 숫자만 바꾼 문제는 피해서, 다른 상황과 다른 숫자로 내 줘: ${recent.map((r) => `「${r}」`).join(" ")}`
+      : "";
+  return `[미션 요청] "${info.label}" 단원의 "${topic}" 주제로, "${pickTheme()}"을(를) 배경으로 한 초등 4학년 수준의 히어로 스토리 문장제 문제를 딱 하나 내 줘. 숫자와 계산을 꼼꼼히 확인해서 답이 하나로 정해지는 문제로 내 줘. 정답이나 풀이는 말하지 말고, 문제만 내고 내가 먼저 생각해 보도록 질문으로 끝내 줘.${avoid}`;
 }

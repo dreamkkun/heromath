@@ -5,6 +5,7 @@ import { CHARACTERS, unitById } from "@/data/characters";
 import { fireConfetti, playFanfare } from "@/lib/celebrate";
 import { fetchQuiz, fetchSolution, quizToText, solutionToText, streamChat } from "@/lib/chatClient";
 import { cleanStreamText } from "@/lib/correctMarker";
+import { addRecent, getRecent } from "@/lib/recentProblems";
 import { isStepChip, looksLikeWordProblem, missionRequest } from "@/lib/wordProblem";
 import { useActiveCharacter, useHeroStore } from "@/store/heroStore";
 import type { ChatMessage, UnitId } from "@/types/chat";
@@ -46,7 +47,12 @@ export function ChatRoom() {
   /** 학생(또는 숨김) 메시지를 추가하고 히어로 답변을 스트리밍으로 받는다 */
   const ask = async (
     text: string,
-    { hidden = false, wordProblem = false, image }: { hidden?: boolean; wordProblem?: boolean; image?: string } = {},
+    {
+      hidden = false,
+      wordProblem = false,
+      image,
+      missionUnit,
+    }: { hidden?: boolean; wordProblem?: boolean; image?: string; missionUnit?: UnitId } = {},
   ) => {
     addMessage({ role: "student", content: text, hidden, image });
     const { characterId, messages: history } = useHeroStore.getState();
@@ -77,6 +83,8 @@ export function ChatRoom() {
 
       const { text: finalText, solved } = cleanStreamText(raw);
       if (heroId) updateMessage(heroId, { content: finalText });
+      // 미션으로 낸 문제는 기억해 두었다가 다음 출제 때 겹치지 않게 한다
+      if (missionUnit && heroId && finalText && !controller.signal.aborted) addRecent("mission", missionUnit, [finalText]);
       if (solved && heroId && !controller.signal.aborted) {
         // 문제를 풀었으니 단계 힌트 칩은 숨긴다
         updateMessage(heroId, { solved: true, showWordProblemSteps: false });
@@ -144,8 +152,10 @@ export function ChatRoom() {
     if (useHeroStore.getState().isThinking) return;
     addMessage({ role: "student", content: `💡 ${unitById(unit)?.label ?? ""} 개념 퀴즈 풀래!` });
     void fetchCard("퀴즈를 만들고 있어", async (signal) => {
-      const result = await fetchQuiz(useHeroStore.getState().characterId, unit, signal);
-      return "quiz" in result ? { content: quizToText(result.quiz), quiz: result.quiz } : { content: result.error };
+      const result = await fetchQuiz(useHeroStore.getState().characterId, unit, getRecent("quiz", unit), signal);
+      if (!("quiz" in result)) return { content: result.error };
+      addRecent("quiz", unit, result.quiz.questions.map((q) => q.question));
+      return { content: quizToText(result.quiz), quiz: result.quiz };
     });
   };
 
@@ -158,7 +168,7 @@ export function ChatRoom() {
   };
 
   const pickUnit = (unit: UnitId) => {
-    void ask(missionRequest(unit), { hidden: true, wordProblem: true });
+    void ask(missionRequest(unit, getRecent("mission", unit)), { hidden: true, wordProblem: true, missionUnit: unit });
   };
 
   return (
