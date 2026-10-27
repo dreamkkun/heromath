@@ -18,14 +18,16 @@ const QuizSchema = z.object({
   questions: z
     .array(
       z.object({
-        lesson: z.string().describe("'알아두기': 이 문제를 풀 때 필요한 개념을 4학년 눈높이로 1~2문장 설명"),
-        question: z.string().describe("알아두기를 안 봐도 혼자 풀 수 있는 객관식 질문 1문장"),
+        lesson: z.string().describe("'알아두기': 이 문제를 푸는 핵심 개념이나 요령을 4학년 눈높이로 1~2문장 설명"),
+        question: z.string().describe("알아두기를 안 봐도 혼자 풀 수 있는 객관식 문제. 생각을 두 번 이상 해야 풀리는 문제"),
         answer: z.string().describe("정답 보기 (짧게)"),
-        wrongChoices: z.array(z.string()).describe("오답 보기 2~3개. 아이들이 자주 하는 실수에서 나온 값"),
-        explanation: z.string().describe("정답인 이유 1~2문장. 틀리기 쉬운 점이 있으면 짚어 준다"),
+        wrongChoices: z
+          .array(z.string())
+          .describe("오답 보기 3개. 풀이 중간값, 받아내림·자릿값 실수처럼 그럴듯한 실수에서 나온 값"),
+        explanation: z.string().describe("풀이 과정을 1~3문장으로. 어디서 틀리기 쉬운지도 짚어 준다"),
       }),
     )
-    .describe(`문제 ${GENERATE_COUNT}개, 쉬운 것부터 차례로`),
+    .describe(`문제 ${GENERATE_COUNT}개, 첫 문제도 쉽지 않게 시작해서 점점 어렵게`),
 });
 
 /** 검산: 정답을 모르는 상태에서 각 문제를 따로 풀어 보게 한다 */
@@ -41,16 +43,22 @@ const CheckSchema = z.object({
 
 function quizPrompt(character: Character) {
   return `You are ${character.name}, a math tutor hero for a 4th grader in South Korea (age 10-11).
-Make a short concept quiz, in Korean, that teaches the ideas of one unit in an easy, friendly way.
+Make a short concept quiz, in Korean, that teaches the ideas of one unit in a friendly way but at a challenging level.
 
 Persona (light touch: one short hero phrase in the intro, plain clear language elsewhere):
 ${character.personaDetail}
 
 Rules:
-- Each question first teaches with a 1-2 sentence "lesson", then checks that idea with a multiple-choice question.
+- Each question first gives a 1-2 sentence "lesson" (the key idea or a solving tip), then a multiple-choice question.
+- Difficulty: upper-middle to hard for 4th grade, like the "도전" problems in 수학 익힘책 or the harder half of a
+  단원평가. At most ONE question may be a simple concept check; every other question must make the student apply
+  the idea with two or more steps, for example: a two-step calculation, finding the missing number □ (working
+  backwards), comparing several values, spotting which worked solution is wrong, or a word problem that needs two
+  operations. Avoid questions answerable at a glance.
 - Every question must be fully answerable on its own, without reading the lesson (never write "이 규칙에 따라" without stating the rule).
 - Stay strictly inside the listed topics of the South Korean 4th-grade curriculum. No algebra (x, y), no negative numbers.
-- Use concrete, kid-friendly situations from the given story setting, and small numbers.
+- Use concrete situations from the given story setting, with textbook-sized numbers (e.g. mixed numbers that need
+  regrouping, decimals to the thousandths, numbers in the 억/조 range, angles that need two facts combined).
 - "answer" is the single correct choice. "wrongChoices" are plain values or short phrases that come from
   common mistakes. Never write explanations inside a choice, never use impossible values (e.g. a denominator of 0),
   and never make a wrong choice equal in value to the answer (e.g. $\\dfrac{2}{4}$ vs $\\dfrac{1}{2}$).

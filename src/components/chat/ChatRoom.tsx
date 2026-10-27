@@ -151,7 +151,7 @@ export function ChatRoom() {
   const startQuiz = (unit: UnitId) => {
     if (useHeroStore.getState().isThinking) return;
     addMessage({ role: "student", content: `💡 ${unitById(unit)?.label ?? ""} 개념 퀴즈 풀래!` });
-    void fetchCard("퀴즈를 만들고 있어", async (signal) => {
+    void fetchCard("도전 퀴즈를 만들고 있어. 30초쯤 걸려!", async (signal) => {
       const result = await fetchQuiz(useHeroStore.getState().characterId, unit, getRecent("quiz", unit), signal);
       if (!("quiz" in result)) return { content: result.error };
       addRecent("quiz", unit, result.quiz.questions.map((q) => q.question));
