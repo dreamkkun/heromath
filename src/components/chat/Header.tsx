@@ -14,14 +14,18 @@ export function Header({ badges, soundOn, onToggleSound }: HeaderProps) {
   return (
     <header className="border-b-2 border-grid bg-white">
       <div className="mx-auto flex h-14 max-w-3xl items-center gap-2 px-4">
-        <h1 className="flex flex-1 items-center gap-1.5 font-display text-xl leading-none text-ink">
-          <span
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-marker text-base"
-            aria-hidden
+        <h1 className="flex-1">
+          {/* 로고를 누르면 첫 화면 메뉴로 */}
+          <Link
+            href="/"
+            aria-label="히어로 매스 메뉴로"
+            className="inline-flex h-11 items-center gap-1.5 rounded-full pr-2 font-display text-xl leading-none text-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
-            ⭐
-          </span>
-          히어로 매스
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-marker text-base" aria-hidden>
+              ⭐
+            </span>
+            히어로 매스
+          </Link>
         </h1>
 
         <Link

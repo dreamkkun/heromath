@@ -253,7 +253,7 @@ export function GalagaGame() {
     >
       <header className="mx-auto flex w-full max-w-md items-center gap-2 px-4 pt-3">
         <Link
-          href="/"
+          href="/study"
           onClick={goStudy}
           className="flex h-11 items-center gap-1.5 rounded-full px-3 text-[15px] whitespace-nowrap text-white/85 hover:bg-white/10 hover:text-white focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
@@ -319,7 +319,7 @@ export function GalagaGame() {
                 이제 공부로 돌아갈까? 히어로가 기다리고 있어.
               </p>
               <Link
-                href="/"
+                href="/study"
                 onClick={goStudy}
                 autoFocus
                 className="btn-press flex h-13 w-full items-center justify-center gap-2 rounded-2xl border-2 bg-[var(--hero)] font-display text-xl text-white focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ink"
@@ -432,7 +432,7 @@ export function GalagaGame() {
               <PrimaryButton onClick={start} icon={<RotateCcw className="h-5 w-5" aria-hidden />}>
                 다시 하기
               </PrimaryButton>
-              <Link href="/" onClick={goStudy} className="text-[15px] text-ink-soft underline underline-offset-4 hover:text-ink">
+              <Link href="/study" onClick={goStudy} className="text-[15px] text-ink-soft underline underline-offset-4 hover:text-ink">
                 공부로 돌아가기
               </Link>
             </Overlay>

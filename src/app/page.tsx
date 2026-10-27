@@ -1,10 +1,10 @@
 import { AccessGate } from "@/components/AccessGate";
-import { ChatRoom } from "@/components/chat/ChatRoom";
+import { Lobby } from "@/components/Lobby";
 
 export default function Home() {
   return (
     <AccessGate>
-      <ChatRoom />
+      <Lobby />
     </AccessGate>
   );
 }

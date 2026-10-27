@@ -42,7 +42,14 @@ export const useHeroStore = create<HeroState>()(
 
       selectCharacter: (id) => {
         if (id === get().characterId) return;
-        set((s) => ({ characterId: id, messages: [...s.messages, greetingMessage(id)] }));
+        set((s) => ({
+          characterId: id,
+          // 아직 대화를 시작하기 전(첫 인사만 있음)이면 인사말을 바꾸고, 대화 중이면 새 히어로 인사를 이어 붙인다
+          messages:
+            s.messages.length === 1 && s.messages[0].role === "hero"
+              ? [greetingMessage(id, "greeting")]
+              : [...s.messages, greetingMessage(id)],
+        }));
       },
       setMode: (mode) => set({ mode }),
       addMessage: (message) => {

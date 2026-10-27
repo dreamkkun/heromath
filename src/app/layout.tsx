@@ -16,9 +16,17 @@ const body = Gowun_Dodum({
   subsets: ["latin"],
 });
 
+// 링크 미리보기 이미지는 전체 주소여야 한다. Vercel 배포에선 운영 도메인, 로컬에선 localhost
+const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : "http://localhost:3000";
+
 export const metadata: Metadata = {
-  title: "히어로 매스 아카데미",
+  metadataBase: new URL(siteUrl),
+  title: "히어로 매스",
   description: "초등 4학년을 위한 히어로 수학 튜터",
+  // 카카오톡 등 링크 미리보기는 og:title을 먼저 본다. 어느 화면을 공유해도 같은 이름이 나오게 한다
+  openGraph: { title: "히어로 매스", siteName: "히어로 매스" },
 };
 
 export const viewport: Viewport = {
