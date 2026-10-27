@@ -68,4 +68,7 @@ export interface ApiChatMessage {
 
 export type LearningMode = "own_problem" | "hero_mission";
 
+/** 미션 문제·개념 퀴즈 난이도. 기본 = 교과서 기본 문제, 도전 = 익힘책 '도전' 문제 */
+export type Difficulty = "basic" | "challenge";
+
 export type UnitId = "big_numbers" | "angles" | "fractions" | "decimals" | "patterns";

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { CHARACTERS, pickTheme, unitById } from "@/data/characters";
 import { accessCodeFrom, accessDenied, isAccessAllowed } from "@/lib/server/accessCode";
 import { errorText, FALLBACK_BETA, getClient, MODEL } from "@/lib/server/claude";
-import type { Character, Quiz } from "@/types/chat";
+import type { Character, Difficulty, Quiz } from "@/types/chat";
 
 /** 아이에게 보여줄 문제 수. 검산에서 몇 개 빠질 걸 대비해 하나 더 만든다. */
 const QUESTION_COUNT = 4;
@@ -19,7 +19,7 @@ const QuizSchema = z.object({
     .array(
       z.object({
         lesson: z.string().describe("'알아두기': 이 문제를 푸는 핵심 개념이나 요령을 4학년 눈높이로 1~2문장 설명"),
-        question: z.string().describe("알아두기를 안 봐도 혼자 풀 수 있는 객관식 문제. 생각을 두 번 이상 해야 풀리는 문제"),
+        question: z.string().describe("알아두기를 안 봐도 혼자 풀 수 있는 객관식 문제"),
         answer: z.string().describe("정답 보기 (짧게)"),
         wrongChoices: z
           .array(z.string())
@@ -27,7 +27,7 @@ const QuizSchema = z.object({
         explanation: z.string().describe("풀이 과정을 1~3문장으로. 어디서 틀리기 쉬운지도 짚어 준다"),
       }),
     )
-    .describe(`문제 ${GENERATE_COUNT}개, 첫 문제도 쉽지 않게 시작해서 점점 어렵게`),
+    .describe(`문제 ${GENERATE_COUNT}개, 앞 문제보다 뒤 문제가 조금씩 어렵게`),
 });
 
 /** 검산: 정답을 모르는 상태에서 각 문제를 따로 풀어 보게 한다 */
@@ -41,24 +41,32 @@ const CheckSchema = z.object({
   ),
 });
 
-function quizPrompt(character: Character) {
+/** 난이도별 출제 기준 */
+const LEVEL_RULES: Record<Difficulty, string> = {
+  basic: `- Difficulty: basic textbook level (교과서 기본 문제). Each question checks one idea with one step, using
+  small, friendly numbers. Start very approachable and get only slightly harder.`,
+  challenge: `- Difficulty: upper-middle to hard for 4th grade, like the "도전" problems in 수학 익힘책 or the harder half of a
+  단원평가. At most ONE question may be a simple concept check; every other question must make the student apply
+  the idea with two or more steps, for example: a two-step calculation, finding the missing number □ (working
+  backwards), comparing several values, spotting which worked solution is wrong, or a word problem that needs two
+  operations. Avoid questions answerable at a glance.
+- Use textbook-sized numbers (e.g. mixed numbers that need regrouping, decimals to the thousandths, numbers in the
+  억/조 range, angles that need two facts combined).`,
+};
+
+function quizPrompt(character: Character, difficulty: Difficulty) {
   return `You are ${character.name}, a math tutor hero for a 4th grader in South Korea (age 10-11).
-Make a short concept quiz, in Korean, that teaches the ideas of one unit in a friendly way but at a challenging level.
+Make a short concept quiz, in Korean, that teaches the ideas of one unit in a friendly way.
 
 Persona (light touch: one short hero phrase in the intro, plain clear language elsewhere):
 ${character.personaDetail}
 
 Rules:
 - Each question first gives a 1-2 sentence "lesson" (the key idea or a solving tip), then a multiple-choice question.
-- Difficulty: upper-middle to hard for 4th grade, like the "도전" problems in 수학 익힘책 or the harder half of a
-  단원평가. At most ONE question may be a simple concept check; every other question must make the student apply
-  the idea with two or more steps, for example: a two-step calculation, finding the missing number □ (working
-  backwards), comparing several values, spotting which worked solution is wrong, or a word problem that needs two
-  operations. Avoid questions answerable at a glance.
+${LEVEL_RULES[difficulty]}
 - Every question must be fully answerable on its own, without reading the lesson (never write "이 규칙에 따라" without stating the rule).
 - Stay strictly inside the listed topics of the South Korean 4th-grade curriculum. No algebra (x, y), no negative numbers.
-- Use concrete situations from the given story setting, with textbook-sized numbers (e.g. mixed numbers that need
-  regrouping, decimals to the thousandths, numbers in the 억/조 range, angles that need two facts combined).
+- Use concrete situations from the given story setting.
 - "answer" is the single correct choice. "wrongChoices" are plain values or short phrases that come from
   common mistakes. Never write explanations inside a choice, never use impossible values (e.g. a denominator of 0),
   and never make a wrong choice equal in value to the answer (e.g. $\\dfrac{2}{4}$ vs $\\dfrac{1}{2}$).
@@ -127,7 +135,13 @@ async function verify(questions: Quiz["questions"]) {
   });
 }
 
-async function generate(character: Character, unitLabel: string, topics: readonly string[], avoid: string[]) {
+async function generate(
+  character: Character,
+  difficulty: Difficulty,
+  unitLabel: string,
+  topics: readonly string[],
+  avoid: string[],
+) {
   const focus = pickFocus(topics);
   const theme = pickTheme();
   const avoidText =
@@ -139,7 +153,7 @@ async function generate(character: Character, unitLabel: string, topics: readonl
     max_tokens: 16000,
     // medium은 27초쯤 걸려 아이가 기다리기 길었다. 정확도는 아래 검산 단계에서 따로 챙긴다
     output_config: { effort: "low", format: betaZodOutputFormat(QuizSchema) },
-    system: quizPrompt(character),
+    system: quizPrompt(character, difficulty),
     messages: [
       {
         role: "user",
@@ -158,19 +172,22 @@ async function generate(character: Character, unitLabel: string, topics: readonl
   const built = buildQuestions(draft);
   const checked = await verify(built);
   // 검산에서 몇 문제가 빠지는지 배포 로그로 지켜볼 수 있게 남긴다
-  console.info(`[api/quiz] ${unitLabel}: made ${draft.questions.length}, well-formed ${built.length}, verified ${checked.length}`);
+  console.info(`[api/quiz] ${unitLabel} (${difficulty}): made ${draft.questions.length}, well-formed ${built.length}, verified ${checked.length}`);
   return { title: draft.title, intro: draft.intro, questions: checked.slice(0, QUESTION_COUNT) } satisfies Quiz;
 }
 
 export async function POST(req: Request) {
   if (!isAccessAllowed(accessCodeFrom(req))) return accessDenied();
 
-  const body = (await req.json().catch(() => null)) as { characterId?: string; unit?: string; avoid?: unknown } | null;
+  const body = (await req.json().catch(() => null)) as
+    | { characterId?: string; unit?: string; difficulty?: string; avoid?: unknown }
+    | null;
   const unit = body?.unit ? unitById(body.unit) : undefined;
   if (!body || !body.characterId || !(body.characterId in CHARACTERS) || !unit) {
     return Response.json({ error: "잘못된 요청이에요." }, { status: 400 });
   }
   const character = CHARACTERS[body.characterId as keyof typeof CHARACTERS];
+  const difficulty: Difficulty = body.difficulty === "basic" ? "basic" : "challenge";
   const avoid = Array.isArray(body.avoid)
     ? body.avoid
         .filter((a): a is string => typeof a === "string")
@@ -180,9 +197,9 @@ export async function POST(req: Request) {
 
   try {
     // 검산을 통과한 문제가 너무 적으면 한 번 더 만든다
-    let quiz = await generate(character, unit.label, unit.topics, avoid);
+    let quiz = await generate(character, difficulty, unit.label, unit.topics, avoid);
     if (!quiz || quiz.questions.length < MIN_QUESTIONS) {
-      quiz = await generate(character, unit.label, unit.topics, avoid);
+      quiz = await generate(character, difficulty, unit.label, unit.topics, avoid);
     }
     if (!quiz || quiz.questions.length === 0) {
       return Response.json({ error: "퀴즈를 만들다가 꼬였어. 한 번 더 눌러 줄래?" }, { status: 502 });

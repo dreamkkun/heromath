@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { CHARACTERS, DEFAULT_CHARACTER_ID } from "@/data/characters";
-import type { CharacterId, ChatMessage, LearningMode } from "@/types/chat";
+import type { CharacterId, ChatMessage, Difficulty, LearningMode } from "@/types/chat";
 
 let idSeq = 0;
 export const newMessageId = () => `m${idSeq++}`;
@@ -17,6 +17,7 @@ interface HeroState {
   isThinking: boolean;
   badges: number;
   soundOn: boolean;
+  difficulty: Difficulty;
 
   selectCharacter: (id: CharacterId) => void;
   setMode: (mode: LearningMode) => void;
@@ -26,6 +27,7 @@ interface HeroState {
   setThinking: (thinking: boolean) => void;
   earnBadge: () => void;
   toggleSound: () => void;
+  setDifficulty: (difficulty: Difficulty) => void;
   resetChat: () => void;
 }
 
@@ -39,6 +41,7 @@ export const useHeroStore = create<HeroState>()(
       isThinking: false,
       badges: 0,
       soundOn: true,
+      difficulty: "challenge",
 
       selectCharacter: (id) => {
         if (id === get().characterId) return;
@@ -62,13 +65,14 @@ export const useHeroStore = create<HeroState>()(
       setThinking: (isThinking) => set({ isThinking }),
       earnBadge: () => set((s) => ({ badges: s.badges + 1 })),
       toggleSound: () => set((s) => ({ soundOn: !s.soundOn })),
+      setDifficulty: (difficulty) => set({ difficulty }),
       resetChat: () => set((s) => ({ messages: [greetingMessage(s.characterId)], isThinking: false })),
     }),
     {
       name: "hero-math",
       storage: createJSONStorage(() => localStorage),
-      // 대화 내용은 저장하지 않고, 고른 히어로·배지·소리 설정만 기억한다
-      partialize: (s) => ({ characterId: s.characterId, badges: s.badges, soundOn: s.soundOn }),
+      // 대화 내용은 저장하지 않고, 고른 히어로·배지·소리·난이도 설정만 기억한다
+      partialize: (s) => ({ characterId: s.characterId, badges: s.badges, soundOn: s.soundOn, difficulty: s.difficulty }),
       // SSR 하이드레이션 불일치를 피하려고 마운트 후 수동으로 rehydrate
       skipHydration: true,
       onRehydrateStorage: () => (state) => {

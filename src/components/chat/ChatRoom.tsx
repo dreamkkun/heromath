@@ -23,7 +23,8 @@ export function ChatRoom() {
   const isThinking = useHeroStore((s) => s.isThinking);
   const badges = useHeroStore((s) => s.badges);
   const soundOn = useHeroStore((s) => s.soundOn);
-  const { selectCharacter, setMode, addMessage, updateMessage, setThinking, earnBadge, toggleSound } =
+  const difficulty = useHeroStore((s) => s.difficulty);
+  const { selectCharacter, setMode, addMessage, updateMessage, setThinking, earnBadge, toggleSound, setDifficulty } =
     useHeroStore.getState();
   const abortRef = useRef<AbortController>(null);
   const [toastKey, setToastKey] = useState<number | null>(null);
@@ -150,9 +151,14 @@ export function ChatRoom() {
   /** 단원 개념 퀴즈 카드. 아이가 무엇을 골랐는지 메모지로 먼저 남긴다. */
   const startQuiz = (unit: UnitId) => {
     if (useHeroStore.getState().isThinking) return;
-    addMessage({ role: "student", content: `💡 ${unitById(unit)?.label ?? ""} 개념 퀴즈 풀래!` });
-    void fetchCard("도전 퀴즈를 만들고 있어. 30초쯤 걸려!", async (signal) => {
-      const result = await fetchQuiz(useHeroStore.getState().characterId, unit, getRecent("quiz", unit), signal);
+    const level = useHeroStore.getState().difficulty;
+    const levelName = level === "challenge" ? "도전" : "기본";
+    addMessage({ role: "student", content: `💡 ${unitById(unit)?.label ?? ""} 개념 퀴즈 (${levelName}) 풀래!` });
+    // 도전 퀴즈는 문제가 길고 복잡해서 만드는 데 두 배쯤 걸린다
+    const waiting = level === "challenge" ? "도전 퀴즈를 만들고 있어. 30초쯤 걸려!" : "퀴즈를 만들고 있어. 15초쯤 걸려!";
+    void fetchCard(waiting, async (signal) => {
+      const { characterId } = useHeroStore.getState();
+      const result = await fetchQuiz(characterId, unit, level, getRecent("quiz", unit), signal);
       if (!("quiz" in result)) return { content: result.error };
       addRecent("quiz", unit, result.quiz.questions.map((q) => q.question));
       return { content: quizToText(result.quiz), quiz: result.quiz };
@@ -168,7 +174,8 @@ export function ChatRoom() {
   };
 
   const pickUnit = (unit: UnitId) => {
-    void ask(missionRequest(unit, getRecent("mission", unit)), { hidden: true, wordProblem: true, missionUnit: unit });
+    const level = useHeroStore.getState().difficulty;
+    void ask(missionRequest(unit, level, getRecent("mission", unit)), { hidden: true, wordProblem: true, missionUnit: unit });
   };
 
   return (
@@ -198,6 +205,8 @@ export function ChatRoom() {
             onModeChange={setMode}
             onPickUnit={pickUnit}
             onPickQuiz={startQuiz}
+            difficulty={difficulty}
+            onDifficultyChange={setDifficulty}
             disabled={isThinking}
           />
           <ChatInput onSend={sendStudentMessage} allowImage={mode === "own_problem"} disabled={isThinking} />

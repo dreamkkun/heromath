@@ -3,22 +3,37 @@
 import { Lightbulb, PencilLine } from "lucide-react";
 import { useState } from "react";
 import { UNITS } from "@/data/characters";
-import type { LearningMode, UnitId } from "@/types/chat";
+import type { Difficulty, LearningMode, UnitId } from "@/types/chat";
 
 interface ModeSelectorProps {
   mode: LearningMode;
   onModeChange: (mode: LearningMode) => void;
   onPickUnit: (unit: UnitId) => void;
   onPickQuiz: (unit: UnitId) => void;
+  difficulty: Difficulty;
+  onDifficultyChange: (difficulty: Difficulty) => void;
   disabled?: boolean;
 }
+
+const DIFFICULTIES = [
+  { id: "basic", label: "기본" },
+  { id: "challenge", label: "도전" },
+] as const;
 
 const MODES = [
   { id: "own_problem", label: "내 문제 풀기" },
   { id: "hero_mission", label: "미션 받기" },
 ] as const;
 
-export function ModeSelector({ mode, onModeChange, onPickUnit, onPickQuiz, disabled }: ModeSelectorProps) {
+export function ModeSelector({
+  mode,
+  onModeChange,
+  onPickUnit,
+  onPickQuiz,
+  difficulty,
+  onDifficultyChange,
+  disabled,
+}: ModeSelectorProps) {
   // 단원을 고르면 '문제 받기'와 '개념 퀴즈' 중 무엇을 할지 한 번 더 고른다
   const [unit, setUnit] = useState<UnitId | null>(null);
   const unitInfo = UNITS.find((u) => u.id === unit);
@@ -77,6 +92,35 @@ export function ModeSelector({ mode, onModeChange, onPickUnit, onPickQuiz, disab
           </div>
 
           {unitInfo ? (
+            <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span id="difficulty-label" className="shrink-0 font-display text-base text-ink">
+                난이도
+              </span>
+              <div
+                role="radiogroup"
+                aria-labelledby="difficulty-label"
+                className="grid flex-1 grid-cols-2 rounded-full bg-paper p-1"
+              >
+                {DIFFICULTIES.map(({ id, label }) => {
+                  const active = difficulty === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => onDifficultyChange(id)}
+                      className={`min-h-9 rounded-full px-3 font-display text-base transition-colors focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+                        active ? "bg-[var(--hero)] text-white" : "text-ink-soft hover:text-ink"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -105,6 +149,7 @@ export function ModeSelector({ mode, onModeChange, onPickUnit, onPickQuiz, disab
                 <Lightbulb className="h-5 w-5 shrink-0" aria-hidden />
                 개념 퀴즈
               </button>
+            </div>
             </div>
           ) : (
             <p className="px-1 text-[15px] text-ink-soft">단원을 고르면 문제나 개념 퀴즈를 받을 수 있어.</p>

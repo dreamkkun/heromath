@@ -1,5 +1,5 @@
 import { ACCESS_CODE_HEADER, ACCESS_REVOKED_EVENT, loadAccessCode } from "@/lib/accessCode";
-import type { ApiChatMessage, CharacterId, ChatMessage, Quiz, Solution, UnitId } from "@/types/chat";
+import type { ApiChatMessage, CharacterId, ChatMessage, Difficulty, Quiz, Solution, UnitId } from "@/types/chat";
 
 /** 사진은 용량이 커서 최근 2장만 보낸다 (서버도 같은 기준으로 자른다) */
 const MAX_IMAGES = 2;
@@ -89,11 +89,12 @@ export function solutionToText(solution: Solution) {
 export async function fetchQuiz(
   characterId: CharacterId,
   unit: UnitId,
+  difficulty: Difficulty,
   /** 최근에 낸 문제들 (겹치지 않게) */
   avoid: string[],
   signal?: AbortSignal,
 ): Promise<{ quiz: Quiz } | { error: string }> {
-  const res = await post("/api/quiz", JSON.stringify({ characterId, unit, avoid }), signal);
+  const res = await post("/api/quiz", JSON.stringify({ characterId, unit, difficulty, avoid }), signal);
   if (revokeIfUnauthorized(res)) return { error: "🔒 비밀 작전 코드를 다시 입력해 줘!" };
   if (!res.ok) return { error: (await errorMessage(res)) || "⚠️ 퀴즈를 가져오지 못했어. 다시 눌러 줄래?" };
   return (await res.json()) as { quiz: Quiz };
